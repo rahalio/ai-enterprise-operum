@@ -1,0 +1,699 @@
+openapi: 3.0.3
+info:
+  title: Operum
+  version: 0.1.0
+  description: >-
+    Intelligent-operations readiness and investment portfolio for large-enterprise
+    shared-services buyers. Maps the multi-tower buying network, scores readiness,
+    and governs technology-and-services spend against outcome KPIs.
+  x-product-slug: ai-enterprise-operum
+  x-source: ai-in-enterprise/Accenture-Intelligent-Operations-Survey-Demographics/
+servers:
+  - url: https://api.example.com
+tags:
+  - name: Network
+    description: Buyer network by tower, title, and region
+  - name: Readiness
+    description: Living tower and region readiness scores
+  - name: Portfolio
+    description: Intelligent-operations investment portfolio
+  - name: Purchases
+    description: In-portfolio purchases and leakage cases
+  - name: Controls
+    description: Risk and control gates for automations
+  - name: Outcomes
+    description: KPI movement and renewal linkage
+  - name: Reporting
+    description: Executive coverage and chargeback
+paths:
+  /v1/buyers:
+    get:
+      operationId: listBuyers
+      tags: [Network]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: tower
+          in: query
+          schema:
+            type: string
+            enum: [shared_services, it, finance, supply_chain, hr, procurement, customer_care, marketing, sales]
+      responses:
+        "200":
+          description: Buyers page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopeBuyerPersona" }
+    post:
+      operationId: registerBuyer
+      tags: [Network]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BuyerPersona" }
+      responses:
+        "201":
+          description: Buyer registered
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeBuyerPersona" }
+  /v1/towers:
+    get:
+      operationId: listTowers
+      tags: [Network]
+      security: [{ BearerAuth: [] }]
+      responses:
+        "200":
+          description: Towers
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopeTower" }
+  /v1/readiness-assessments:
+    get:
+      operationId: listReadinessAssessments
+      tags: [Readiness]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: region
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: Readiness assessments
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopeReadinessAssessment" }
+    post:
+      operationId: createReadinessAssessment
+      tags: [Readiness]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReadinessAssessment" }
+      responses:
+        "201":
+          description: Assessment created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeReadinessAssessment" }
+  /v1/portfolio/initiatives:
+    get:
+      operationId: listPortfolioInitiatives
+      tags: [Portfolio]
+      security: [{ ApiKeyAuth: [] }, { BearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: status
+          in: query
+          schema: { type: string, enum: [proposed, admitted, active, completed, rejected] }
+      responses:
+        "200":
+          description: Portfolio page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopePortfolioInitiative" }
+    post:
+      operationId: admitPortfolioInitiative
+      tags: [Portfolio]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PortfolioInitiative" }
+      responses:
+        "201":
+          description: Initiative admitted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopePortfolioInitiative" }
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+  /v1/portfolio/demand-queue:
+    get:
+      operationId: getDemandQueue
+      tags: [Portfolio]
+      security: [{ BearerAuth: [] }]
+      responses:
+        "200":
+          description: Readiness-sequenced demand queue
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopeDemandItem" }
+  /v1/purchases:
+    get:
+      operationId: listPurchases
+      tags: [Purchases]
+      security: [{ ApiKeyAuth: [] }, { BearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Purchases page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopePurchaseEvent" }
+    post:
+      operationId: recordPurchase
+      tags: [Purchases]
+      security: [{ ApiKeyAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PurchaseEvent" }
+      responses:
+        "201":
+          description: Purchase recorded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopePurchaseEvent" }
+  /v1/leakage-cases:
+    get:
+      operationId: listLeakageCases
+      tags: [Purchases]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Leakage cases
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopeLeakageCase" }
+    post:
+      operationId: openLeakageCase
+      tags: [Purchases]
+      security: [{ ApiKeyAuth: [] }, { BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LeakageCase" }
+      responses:
+        "201":
+          description: Leakage opened
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeLeakageCase" }
+  /v1/control-mappings:
+    post:
+      operationId: upsertControlMapping
+      tags: [Controls]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ControlMapping" }
+      responses:
+        "200":
+          description: Control mapping upserted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeControlMapping" }
+  /v1/control-mappings/{initiativeId}/go-live-check:
+    parameters:
+      - name: initiativeId
+        in: path
+        required: true
+        schema: { type: string }
+    post:
+      operationId: checkGoLiveControls
+      tags: [Controls]
+      security: [{ BearerAuth: [] }]
+      responses:
+        "200":
+          description: Go-live control decision
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeControlMapping" }
+        "409":
+          description: Go-live blocked
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /v1/outcomes:
+    get:
+      operationId: listOutcomeKpis
+      tags: [Outcomes]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - name: initiativeId
+          in: query
+          schema: { type: string }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Outcome KPIs
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopeOutcomeKPI" }
+    post:
+      operationId: recordOutcomeKpi
+      tags: [Outcomes]
+      security: [{ ApiKeyAuth: [] }, { BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OutcomeKPI" }
+      responses:
+        "201":
+          description: Outcome recorded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeOutcomeKPI" }
+  /v1/reports/executive-coverage:
+    get:
+      operationId: getExecutiveCoverageReport
+      tags: [Reporting]
+      security: [{ BearerAuth: [] }]
+      responses:
+        "200":
+          description: Tower by region coverage report
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeExecutiveCoverageReport" }
+  /v1/reports/chargeback:
+    get:
+      operationId: listChargebackAllocations
+      tags: [Reporting]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - name: period
+          in: query
+          schema: { type: string }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Chargeback allocations
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopeChargebackAllocation" }
+components:
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+  responses:
+    Unauthorized:
+      description: Missing or invalid credentials
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    UnprocessableEntity:
+      description: Validation failed
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Problem" }
+
+  schemas:
+
+    ResponseMeta:
+      type: object
+      required: [requestId, timestamp]
+      properties:
+        requestId: { type: string }
+        timestamp: { type: string, format: date-time }
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+
+    BuyerPersona:
+      type: object
+      required: [id, name, titleBand, tower, region, buyingRole]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        titleBand: { type: string, enum: [ceo, senior_vp, vp, director, other] }
+        tower: { type: string, enum: [shared_services, it, finance, supply_chain, hr, procurement, customer_care, marketing, sales] }
+        region: { type: string, enum: [na, eala, apac] }
+        country: { type: string }
+        buyingRole: { type: string, enum: [economic_buyer, influencer, user] }
+    Tower:
+      type: object
+      required: [id, name, code]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        code: { type: string }
+        costToServeBaseline: { type: number, format: double }
+    ReadinessAssessment:
+      type: object
+      required: [id, towerId, region, score, period]
+      properties:
+        id: { type: string }
+        towerId: { type: string }
+        region: { type: string }
+        score: { type: number, format: float, minimum: 0, maximum: 100 }
+        period: { type: string }
+        gapNarrative: { type: string }
+        controlsReady: { type: boolean }
+    PortfolioInitiative:
+      type: object
+      required: [id, name, primaryTower, status, targetKpi]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        primaryTower: { type: string }
+        dependentTowers:
+          type: array
+          items: { type: string }
+        status: { type: string, enum: [proposed, admitted, active, completed, rejected] }
+        targetKpi: { type: string }
+        targetImprovementPercent: { type: number, format: double }
+        dualTowerBenefit: { type: boolean }
+        spendAmount: { type: number, format: double }
+    DemandItem:
+      type: object
+      required: [id, initiativeId, sequenceRank, stage]
+      properties:
+        id: { type: string }
+        initiativeId: { type: string }
+        sequenceRank: { type: integer }
+        stage: { type: string, enum: [stabilize, automate, intelligently_decide] }
+        blockedByReadiness: { type: boolean }
+    PurchaseEvent:
+      type: object
+      required: [id, vendorName, amount, inPortfolio]
+      properties:
+        id: { type: string }
+        initiativeId: { type: string }
+        vendorName: { type: string }
+        amount: { type: number, format: double }
+        currency: { type: string, example: USD }
+        inPortfolio: { type: boolean }
+        purchasedAt: { type: string, format: date-time }
+    LeakageCase:
+      type: object
+      required: [id, purchaseId, status, remediationDueAt]
+      properties:
+        id: { type: string }
+        purchaseId: { type: string }
+        status: { type: string, enum: [open, remediated, waived] }
+        remediationDueAt: { type: string, format: date-time }
+        remediationPlan: { type: string }
+    ControlMapping:
+      type: object
+      required: [id, initiativeId, controlFramework, status]
+      properties:
+        id: { type: string }
+        initiativeId: { type: string }
+        controlFramework: { type: string, enum: [sox, privacy, operational] }
+        status: { type: string, enum: [mapped, missing, blocked] }
+        evidenceUri: { type: string, format: uri }
+    OutcomeKPI:
+      type: object
+      required: [id, initiativeId, metricName, baseline, current]
+      properties:
+        id: { type: string }
+        initiativeId: { type: string }
+        vendorEngagementId: { type: string }
+        metricName: { type: string }
+        baseline: { type: number, format: double }
+        current: { type: number, format: double }
+        period: { type: string }
+    ExecutiveCoverageReport:
+      type: object
+      required: [generatedAt, inPortfolioSpendPercent, towerRegionCoverage]
+      properties:
+        generatedAt: { type: string, format: date-time }
+        inPortfolioSpendPercent: { type: number, format: double }
+        respondentProfileNote: { type: string, description: "Peer context vs 460-buyer survey footprint" }
+        towerRegionCoverage:
+          type: array
+          items:
+            type: object
+            properties:
+              tower: { type: string }
+              region: { type: string }
+              readinessScore: { type: number }
+              initiativeCount: { type: integer }
+    ChargebackAllocation:
+      type: object
+      required: [id, towerId, period, amount]
+      properties:
+        id: { type: string }
+        towerId: { type: string }
+        capabilityId: { type: string }
+        period: { type: string }
+        amount: { type: number, format: double }
+
+    DataEnvelopeBuyerPersona:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/BuyerPersona" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeBuyerPersona:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/BuyerPersona" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopeTower:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/Tower" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeTower:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/Tower" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopeReadinessAssessment:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/ReadinessAssessment" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeReadinessAssessment:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/ReadinessAssessment" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopePortfolioInitiative:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/PortfolioInitiative" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopePortfolioInitiative:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/PortfolioInitiative" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopeDemandItem:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/DemandItem" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeDemandItem:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/DemandItem" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopePurchaseEvent:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/PurchaseEvent" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopePurchaseEvent:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/PurchaseEvent" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopeLeakageCase:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/LeakageCase" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeLeakageCase:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/LeakageCase" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopeControlMapping:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/ControlMapping" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeControlMapping:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/ControlMapping" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopeOutcomeKPI:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/OutcomeKPI" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeOutcomeKPI:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/OutcomeKPI" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopeExecutiveCoverageReport:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/ExecutiveCoverageReport" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeExecutiveCoverageReport:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/ExecutiveCoverageReport" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
+    DataEnvelopeChargebackAllocation:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/ChargebackAllocation" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeChargebackAllocation:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: "#/components/schemas/ChargebackAllocation" }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+
